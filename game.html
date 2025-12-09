@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tiny Worlds – Game</title>
+  <style>
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      background:#020617;
+      color:#e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #topBar {
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 14px;
+      background: linear-gradient(to right,#0f172a,#020617);
+      border-bottom:1px solid #1f2937;
+      font-size:13px;
+    }
+    #topBar span { color:#cbd5f5; }
+    #topBar .tag { color:#a5b4fc; font-weight:600; }
+    canvas {
+      display:block;
+      margin:10px auto;
+      background:#020617;
+      border-radius:16px;
+      border:1px solid #1f2937;
+      box-shadow:0 20px 60px rgba(15,23,42,0.9);
+    }
+    #overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.82);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      visibility:hidden;
+    }
+    #menu {
+      width:90%;
+      max-width:700px;
+      background:#020617;
+      border-radius:18px;
+      padding:20px;
+      border:1px solid #4b5563;
+      box-shadow:0 24px 70px rgba(0,0,0,0.8);
+      display:grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+      gap:14px;
+    }
+    #menu h2 {
+      margin-top:0;
+      margin-bottom:10px;
+    }
+    .section-title {
+      font-size:13px;
+      color:#9ca3af;
+      margin-bottom:4px;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+    }
+    .btn-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    button {
+      border-radius:10px;
+      border:none;
+      padding:7px 12px;
+      font-weight:600;
+      cursor:pointer;
+      background:linear-gradient(135deg,#38bdf8,#22c55e);
+      color:#020617;
+      font-size:13px;
+      transition:transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      box-shadow:0 8px 18px rgba(56,189,248,0.3);
+    }
+    button:hover {
+      filter:brightness(1.05);
+      transform:translateY(-1px);
+      box-shadow:0 12px 24px rgba(56,189,248,0.4);
+    }
+    button.secondary {
+      background:#020617;
+      color:#e5e7eb;
+      border:1px solid #4b5563;
+      box-shadow:none;
+    }
+    textarea {
+      width:100%;
+      min-height:70px;
+      border-radius:10px;
+      border:1px solid #4b5563;
+      background:#020617;
+      color:#e5e7eb;
+      padding:6px 8px;
+      font-size:12px;
+      resize:vertical;
+    }
+    .small-label {
+      font-size:11px;
+      color:#9ca3af;
+      margin-top:4px;
+      margin-bottom:2px;
+    }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#0f172a;
+      border:1px solid #1f2937;
+      font-size:11px;
+      color:#9ca3af;
+    }
+    .pill-dot {
+      width:8px; height:8px;
+      border-radius:999px;
+      background:#ef4444;
+    }
+    .pill-dot.connected {
+      background:#22c55e;
+    }
+  </style>
+</head>
+<body>
+  <div id="topBar">
+    <div>
+      <span id="topWorldName"></span> ·
+      <span class="tag" id="topSeed"></span>
+    </div>
+    <div>
+      <span>Score: <span id="topScore">0</span></span> ·
+      <span>ESC = Menu</span>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="720" height="420"></canvas>
+
+  <div id="overlay">
+    <div id="menu">
+      <div>
+        <h2>Paused</h2>
+        <div class="section-title">Game</div>
+        <div class="btn-row" style="margin-bottom:10px;">
+          <button id="resumeBtn">Resume</button>
+          <button id="saveQuitBtn" class="secondary">Save &amp; Quit</button>
+          <button id="quitBtn" class="secondary">Quit (no save)</button>
+        </div>
+        <div style="font-size:12px; color:#9ca3af;">
+          Progress is saved per world on this device using IndexedDB.
+        </div>
+      </div>
+
+      <div>
+        <h2>Multiplayer (P2P Test)</h2>
+        <div class="section-title">Status</div>
+        <div class="pill">
+          <div id="statusDot" class="pill-dot"></div>
+          <span id="statusText">Not connected</span>
+        </div>
+
+        <div style="height:6px;"></div>
+
+        <div class="section-title">Host</div>
+        <div class="small-label">1. Click "Create Offer"</div>
+        <div class="btn-row" style="margin-bottom:4px;">
+          <button id="hostOfferBtn">Create Offer</button>
+        </div>
+        <div class="small-label">2. Send this text to your friend</div>
+        <textarea id="hostOfferBox" readonly></textarea>
+        <div class="small-label">3. Paste their answer here, then click "Apply Answer"</div>
+        <textarea id="hostAnswerBox"></textarea>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button id="hostApplyAnswerBtn" class="secondary">Apply Answer</button>
+        </div>
+
+        <div class="section-title">Join</div>
+        <div class="small-label">1. Paste host offer here</div>
+        <textarea id="clientOfferBox"></textarea>
+        <div class="btn-row" style="margin-bottom:4px;">
+          <button id="clientCreateAnswerBtn">Create Answer</button>
+        </div>
+        <div class="small-label">2. Send this answer back to host</div>
+        <textarea id="clientAnswerBox" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/worlds.js"></script>
+  <script src="js/worldgen.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
