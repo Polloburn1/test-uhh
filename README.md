@@ -1,2 +1,1 @@
-# test-uhh
-a t4st cuz i do not know how to make a github website
+#testing if i can do minecraft stuff in github website thingy
